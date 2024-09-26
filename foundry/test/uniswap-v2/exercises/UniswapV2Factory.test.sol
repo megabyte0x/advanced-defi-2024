@@ -27,7 +27,7 @@ contract UniswapV2FactoryTest is Test {
         // Exercise - deploy token + WETH pair contract
         // Write your code here
         // Don’t change any other code
-        address pair;
+        address pair = factory.createPair(address(token), WETH);
 
         address token0 = IUniswapV2Pair(pair).token0();
         address token1 = IUniswapV2Pair(pair).token1();
@@ -41,3 +41,8 @@ contract UniswapV2FactoryTest is Test {
         }
     }
 }
+
+// forge test --fork-url $FORK_URL \
+// --match-path test/uniswap-v2/exercises/UniswapV2Factory.test.sol \
+// --match-test test_createPair \
+// -vvv
