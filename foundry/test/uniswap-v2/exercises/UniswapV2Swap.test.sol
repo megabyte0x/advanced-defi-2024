@@ -40,6 +40,10 @@ contract UniswapV2SwapTest is Test {
 
         // Write your code here
         // Don’t change any other code
+        vm.prank(user);
+        router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            amountIn, amountOutMin, path, user, 1e18
+        );
 
         assertGe(mkr.balanceOf(user), amountOutMin, "MKR balance of user");
     }
@@ -58,6 +62,16 @@ contract UniswapV2SwapTest is Test {
         // Write your code here
         // Don’t change any other code
 
+        vm.prank(user);
+
+        router.swapTokensForExactTokens(
+            amountOut, amountInMax, path, user, 1e18
+        );
+
         assertEq(mkr.balanceOf(user), amountOut, "MKR balance of user");
     }
 }
+// forge test --fork-url $FORK_URL \
+// --match-path test/uniswap-v2/exercises/UniswapV2Swap.test.sol \
+// --match-test test_swapTokensForExactTokens \
+// -vvv
