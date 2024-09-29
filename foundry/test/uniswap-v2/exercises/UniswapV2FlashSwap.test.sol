@@ -43,3 +43,7 @@ contract UniswapV2FlashSwapTest is Test {
         assertGe(dai1, dai0, "DAI balance of pair");
     }
 }
+//     forge test --fork-url $FORK_URL \
+// --match-path test/uniswap-v2/exercises/UniswapV2FlashSwap.test.sol \
+// --match-test test_flashSwap \
+// -vvv
