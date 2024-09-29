@@ -47,8 +47,24 @@ contract UniswapV2LiquidityTest is Test {
         // Don’t change any other code
         vm.prank(user);
 
+        router.addLiquidity(
+            address(dai),
+            address(weth),
+            1000000 * 1e18,
+            100 * 1e18,
+            1000 * 1e18,
+            1e18,
+            user,
+            1e16
+        );
+
         assertGt(pair.balanceOf(user), 0, "LP = 0");
     }
+
+    //     forge test --fork-url $FORK_URL \
+    // --match-path test/uniswap-v2/exercises/UniswapV2Liquidity.test.sol \
+    // --match-test test_addLiquidity \
+    // -vvv
 
     function test_removeLiquidity() public {
         vm.startPrank(user);
@@ -68,8 +84,17 @@ contract UniswapV2LiquidityTest is Test {
         // Write your code here
         // Don’t change any other code
 
+        router.removeLiquidity(
+            DAI, WETH, liquidity, 1, 1, user, block.timestamp
+        );
+
         vm.stopPrank();
 
         assertEq(pair.balanceOf(user), 0, "LP = 0");
     }
+
+    //     forge test --fork-url $FORK_URL \
+    // --match-path test/uniswap-v2/exercises/UniswapV2Liquidity.test.sol \
+    // --match-test test_removeLiquidity \
+    // -vvv
 }
