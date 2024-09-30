@@ -23,6 +23,42 @@ contract UniswapV2Arb1 {
         uint256 minProfit;
     }
 
+    function _swap(SwapParams memory params)
+        private
+        returns (uint256 amountOut)
+    {
+        IERC20(params.tokenIn).approve(address(params.router0), params.amountIn);
+
+        address[] memory path = new address[](2);
+        path[0] = params.tokenIn;
+        path[1] = params.tokenOut;
+
+        uint256[] memory amounts = IUniswapV2Router02(params.router0)
+            .swapExactTokensForTokens({
+            amountIn: params.amountIn,
+            amountOutMin: 0,
+            path: path,
+            to: address(this),
+            deadline: block.timestamp
+        });
+
+        // Swap on router 1
+        IERC20(params.tokenOut).approve(address(params.router1), amounts[1]);
+
+        path[0] = params.tokenOut;
+        path[1] = params.tokenIn;
+
+        amounts = IUniswapV2Router02(params.router1).swapExactTokensForTokens({
+            amountIn: amounts[1],
+            amountOutMin: params.amountIn,
+            path: path,
+            to: address(this),
+            deadline: block.timestamp
+        });
+
+        amountOut = amounts[1];
+    }
+
     // Exercise 1
     // - Execute an arbitrage between router0 and router1
     // - Pull tokenIn from msg.sender
@@ -30,7 +66,16 @@ contract UniswapV2Arb1 {
     function swap(SwapParams calldata params) external {
         // Write your code here
         // Don’t change any other code
+        IERC20(params.tokenIn).transferFrom(
+            msg.sender, address(this), params.amountIn
+        );
+        uint256 amtOut = _swap(params);
+        IERC20(params.tokenIn).transferFrom(address(this), msg.sender, amtOut);
     }
+    //     forge test --fork-url $FORK_URL \
+    // --match-path test/uniswap-v2/exercises/UniswapV2Arb1.test.sol \
+    // --match-test test_swap \
+    // -vvv
 
     // Exercise 2
     // - Execute an arbitrage between router0 and router1 using flash swap
@@ -46,7 +91,20 @@ contract UniswapV2Arb1 {
     {
         // Write your code here
         // Don’t change any other code
+
+        bytes memory data = abi.encode(msg.sender, pair, params);
+
+        IUniswapV2Pair(pair).swap(
+            isToken0 ? params.amountIn : 0,
+            isToken0 ? 0 : params.amountIn,
+            address(this),
+            data
+        );
     }
+    //     forge test --fork-url $FORK_URL \
+    // --match-path test/uniswap-v2/exercises/UniswapV2Arb1.test.sol \
+    // --match-test test_flashSwap \
+    // -vvv
 
     function uniswapV2Call(
         address sender,
@@ -56,5 +114,18 @@ contract UniswapV2Arb1 {
     ) external {
         // Write your code here
         // Don’t change any other code
+
+        (address caller, address pair, SwapParams memory params) =
+            abi.decode(data, (address, address, SwapParams));
+
+        uint256 amountOut = _swap(params);
+
+        uint256 fee = ((params.amountIn * 3) / 997) + 1;
+        uint256 amountToRepay = params.amountIn + fee;
+
+        uint256 profit = amountOut - amountToRepay;
+
+        IERC20(params.tokenIn).transfer(pair, amountToRepay);
+        IERC20(params.tokenIn).transfer(caller, profit);
     }
 }
